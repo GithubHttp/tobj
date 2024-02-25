@@ -604,6 +604,8 @@ pub struct Material {
     ///
     /// Referred to as `dissolve` to match the `MTL` file format specification.
     pub dissolve_texture: Option<String>,
+    /// Name of the displacement map texture file for the material.
+    pub displacement_texture: Option<String>,
     /// The illumnination model to use for this material. The different
     /// illumination models are specified in the [`MTL` spec](http://paulbourke.net/dataformats/mtl/).
     pub illumination_model: Option<u8>,
@@ -1921,7 +1923,15 @@ pub fn load_mtl_buf<B: BufRead>(reader: &mut B) -> MTLLoadResult {
                 } else {
                     return Err(LoadError::MaterialParseError);
                 }
-            }
+            },
+            Some("map_Disp") | Some("map_disp") => match line.get(8..).map(str::trim) {
+                Some("") | None => return Err(LoadError::MaterialParseError),
+                Some(tex) => cur_mat.displacement_texture = Some(tex.to_owned()),
+            },
+            Some("disp") => match line.get(4..).map(str::trim) {
+                Some("") | None => return Err(LoadError::MaterialParseError),
+                Some(tex) => cur_mat.displacement_texture = Some(tex.to_owned()),
+            },
             Some(unknown) => {
                 if !unknown.is_empty() {
                     let param = line[unknown.len()..].trim().to_owned();
