@@ -1878,6 +1878,10 @@ pub fn load_mtl_buf<B: BufRead>(reader: &mut B) -> MTLLoadResult {
                     return Err(LoadError::InvalidObjectName);
                 }
             }
+            Some("disp") => match line.get(4..).map(str::trim) {
+                Some("") | None => return Err(LoadError::MaterialParseError),
+                Some(tex) => cur_mat.displacement_texture = Some(tex.to_owned()),
+            },
             Some("Ka") => cur_mat.ambient = Some(parse_float3(words)?),
             Some("Kd") => cur_mat.diffuse = Some(parse_float3(words)?),
             Some("Ks") => cur_mat.specular = Some(parse_float3(words)?),
@@ -1905,7 +1909,11 @@ pub fn load_mtl_buf<B: BufRead>(reader: &mut B) -> MTLLoadResult {
                     Some("") | None => return Err(LoadError::MaterialParseError),
                     Some(tex) => cur_mat.shininess_texture = Some(tex.to_owned()),
                 }
-            }
+            },
+            Some("map_Disp") | Some("map_disp") => match line.get(8..).map(str::trim) {
+                Some("") | None => return Err(LoadError::MaterialParseError),
+                Some(tex) => cur_mat.displacement_texture = Some(tex.to_owned()),
+            },
             Some("bump") => match line.get(4..).map(str::trim) {
                 Some("") | None => return Err(LoadError::MaterialParseError),
                 Some(tex) => cur_mat.normal_texture = Some(tex.to_owned()),
@@ -1923,14 +1931,6 @@ pub fn load_mtl_buf<B: BufRead>(reader: &mut B) -> MTLLoadResult {
                 } else {
                     return Err(LoadError::MaterialParseError);
                 }
-            },
-            Some("map_Disp") | Some("map_disp") => match line.get(8..).map(str::trim) {
-                Some("") | None => return Err(LoadError::MaterialParseError),
-                Some(tex) => cur_mat.displacement_texture = Some(tex.to_owned()),
-            },
-            Some("disp") => match line.get(4..).map(str::trim) {
-                Some("") | None => return Err(LoadError::MaterialParseError),
-                Some(tex) => cur_mat.displacement_texture = Some(tex.to_owned()),
             },
             Some(unknown) => {
                 if !unknown.is_empty() {
